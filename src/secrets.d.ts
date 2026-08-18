@@ -15,6 +15,11 @@
  *   bunx wrangler secret put SESSION_SECRET
  *   bunx wrangler secret put TURNSTILE_SECRET_KEY
  * For local dev put them in .dev.vars (gitignored).
+ *
+ * NOTE: do not run `wrangler types` and commit the result blindly. Newer
+ * Wrangler emits a differently-shaped interface (`__BaseEnv_CloudflareBindings`)
+ * that this file's declaration merging does not attach to, and it inlines
+ * whatever secret names it finds in the local .dev.vars into a tracked file.
  */
 declare namespace Cloudflare {
 	interface Env {
@@ -27,6 +32,13 @@ declare namespace Cloudflare {
 		/** Telegram logging (optional, gated by TELEGRAM_LOG_ENABLE). */
 		TELEGRAM_BOT_TOKEN?: string;
 		TELEGRAM_CHAT_ID?: string;
+		/**
+		 * Rate limiters declared in wrangler.jsonc. Optional so the code keeps
+		 * working under a runtime/config that lacks them (older wrangler, or a
+		 * dry-run without the binding) instead of throwing on a missing property.
+		 */
+		AUTH_RATE_LIMITER?: RateLimit;
+		API_RATE_LIMITER?: RateLimit;
 	}
 }
 

@@ -27,6 +27,33 @@
 	"triggers": {
 		"crons": ["0 */2 * * *"]
 	},
+	/**
+	 * Rate limiting (unmetered, edge-local counters).
+	 *
+	 * AUTH_RATE_LIMITER guards /auth/verify: without it a solver farm can mint
+	 * unlimited session cookies. API_RATE_LIMITER caps the data-bearing routes so
+	 * a single credential cannot enumerate mailboxes at speed.
+	 *
+	 * `period` only accepts 10 or 60.
+	 */
+	"ratelimits": [
+		{
+			"name": "AUTH_RATE_LIMITER",
+			"namespace_id": "2001",
+			"simple": {
+				"limit": 10,
+				"period": 60
+			}
+		},
+		{
+			"name": "API_RATE_LIMITER",
+			"namespace_id": "2002",
+			"simple": {
+				"limit": 120,
+				"period": 60
+			}
+		}
+	],
 	"vars": {
 		"TELEGRAM_LOG_ENABLE": false,
 		"HOURS_TO_DELETE_D1": 3,

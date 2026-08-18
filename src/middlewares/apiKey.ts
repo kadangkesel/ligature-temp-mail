@@ -64,6 +64,30 @@ function readPresentedKey(c: Context): string | undefined {
 	return c.req.header("X-API-Key")?.trim() || undefined;
 }
 
+/**
+ * Throttle an authenticated caller.
+ *
+ * Keyed on a hash of the credential rather than the IP: the API key is the actual
+ * actor here, and one IP may legitimately front many users (NAT, corporate proxy)
+ * while one key can be replayed from many IPs. Returns true when the request is
+ * allowed to proceed.
+ */
+async function withinRateLimit(
+	c: Context<{ Bindings: CloudflareBindings }>,
+	credential: string,
+): Promise<boolean> {
+	if (!c.env.API_RATE_LIMITER) return true;
+	// Hash so the raw key never becomes a rate-limit key.
+	const digest = await crypto.subtle.digest("SHA-256", encoder.encode(credential));
+	const id = Array.from(new Uint8Array(digest).slice(0, 16))
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+	const { success } = await c.env.API_RATE_LIMITER.limit({ key: `api:${id}` });
+	return success;
+}
+
+const RATE_LIMITED = ERR("Too many requests. Slow down and try again.", "RateLimited");
+
 const apiKeyMiddleware = async (c: Context<{ Bindings: CloudflareBindings }>, next: Next) => {
 	const configuredKey = c.env.API_KEY;
 	const sessionSecret = c.env.SESSION_SECRET;
@@ -73,7 +97,10 @@ const apiKeyMiddleware = async (c: Context<{ Bindings: CloudflareBindings }>, ne
 	const cookie = getCookie(c, SESSION_COOKIE);
 	if (cookie && sessionSecret) {
 		const nowSeconds = Math.floor(Date.now() / 1000);
-		if (await verifySession(cookie, sessionSecret, nowSeconds)) return next();
+		if (await verifySession(cookie, sessionSecret, nowSeconds)) {
+			if (!(await withinRateLimit(c, cookie))) return c.json(RATE_LIMITED, 429);
+			return next();
+		}
 	}
 
 	const presented = readPresentedKey(c);
@@ -101,6 +128,8 @@ const apiKeyMiddleware = async (c: Context<{ Bindings: CloudflareBindings }>, ne
 		// loop retrying the same bad key.
 		return c.json(ERR("The provided API key is not valid.", "Forbidden"), 403);
 	}
+
+	if (!(await withinRateLimit(c, presented))) return c.json(RATE_LIMITED, 429);
 
 	return next();
 };
