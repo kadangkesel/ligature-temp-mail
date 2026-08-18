@@ -34,7 +34,7 @@ export const getEmailAttachmentsRoute = createRoute({
 		params: z.object({
 			emailAddress: z.string().email().openapi({
 				description: "The recipient email address.",
-				example: "user@example.com",
+				example: "user@kadangkesel.site",
 			}),
 		}),
 		query: z.object({

@@ -13,7 +13,9 @@ const PAGE = (domains: string[]) => `<!DOCTYPE html>
 <meta name="description" content="Free disposable email addresses. No signup, no tracking. Receive mail and attachments instantly." />
 <style>
 :root{
-  --paper:#f2eee1;--ink:#12100c;--acc:#ff3b1f;--acc2:#ffd21e;--lime:#b8f000;--cyan:#4ad3ff;
+  /* palette: #000000 #FFFFFF #00FF7F #E6E6FA
+     green and lavender are both light, so text on them is always --ink (black) */
+  --paper:#E6E6FA;--ink:#000000;--white:#FFFFFF;--acc:#00FF7F;--lav:#E6E6FA;
   --bd:3px solid var(--ink);--sh:6px 6px 0 var(--ink);--sh-sm:4px 4px 0 var(--ink);
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -31,16 +33,16 @@ header{
   padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px;
 }
 .logo{font-size:26px;font-weight:900;letter-spacing:-1px;text-transform:uppercase;display:flex;align-items:center;gap:9px;line-height:1}
-.logo .sq{width:16px;height:16px;background:var(--acc2);border:2px solid var(--paper);flex:none}
+.logo .sq{width:16px;height:16px;background:var(--acc);border:2px solid var(--paper);flex:none}
 .hlinks{display:flex;align-items:center;gap:8px}
 .hlinks a{
-  color:var(--ink);background:var(--acc2);border:2px solid var(--paper);padding:6px 11px;
+  color:var(--ink);background:var(--acc);border:2px solid var(--paper);padding:6px 11px;
   font-size:12px;font-weight:900;text-transform:uppercase;text-decoration:none;letter-spacing:.5px;
 }
-.hlinks a:hover{background:var(--lime)}
+.hlinks a:hover{background:var(--white)}
 
 /* ---- panels ---- */
-.panel{background:#fff;border:var(--bd);box-shadow:var(--sh);margin-bottom:24px}
+.panel{background:var(--white);border:var(--bd);box-shadow:var(--sh);margin-bottom:24px}
 .panel-h{
   background:var(--ink);color:var(--paper);padding:9px 16px;font-size:12px;font-weight:900;
   text-transform:uppercase;letter-spacing:1.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -51,27 +53,27 @@ header{
 .addr-box{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
 .addr{
   flex:1;min-width:min(100%,270px);font-family:"SF Mono",Consolas,monospace;font-size:clamp(15px,3.4vw,22px);
-  font-weight:700;background:var(--acc2);border:var(--bd);padding:14px 16px;word-break:break-all;
+  font-weight:700;background:var(--acc);border:var(--bd);padding:14px 16px;word-break:break-all;
   cursor:pointer;line-height:1.3;display:flex;align-items:center;
 }
-.addr:hover{background:var(--lime)}
+.addr:hover{background:var(--white)}
 .addr-acts{display:flex;gap:10px;flex-wrap:wrap}
 
 button,select,input{font-family:inherit;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.6px}
 button{
-  background:#fff;color:var(--ink);border:var(--bd);box-shadow:var(--sh-sm);padding:12px 16px;
+  background:var(--white);color:var(--ink);border:var(--bd);box-shadow:var(--sh-sm);padding:12px 16px;
   cursor:pointer;transition:transform .07s,box-shadow .07s;white-space:nowrap;
 }
-button:hover{background:var(--acc2)}
+button:hover{background:var(--acc)}
 button:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
-button.primary{background:var(--acc);color:#fff}
-button.primary:hover{background:#e02f14}
-button.danger:hover{background:var(--acc);color:#fff}
+button.primary{background:var(--acc);color:var(--ink)}
+button.primary:hover{background:var(--ink);color:var(--acc)}
+button.danger:hover{background:var(--ink);color:var(--acc)}
 select,input[type=text]{
-  background:#fff;color:var(--ink);border:var(--bd);padding:12px;cursor:pointer;max-width:100%;
+  background:var(--white);color:var(--ink);border:var(--bd);padding:12px;cursor:pointer;max-width:100%;
 }
 input[type=text]{text-transform:lowercase;letter-spacing:0;font-weight:700;font-family:"SF Mono",Consolas,monospace;cursor:text}
-input[type=text]:focus,select:focus{outline:none;background:var(--acc2)}
+input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
 
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
 .divider{height:3px;background:var(--ink);margin:18px 0;opacity:.12}
@@ -89,51 +91,51 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc2)}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* ---- QR ---- */
-#qrwrap{display:none;margin-top:16px;padding:16px;border:var(--bd);background:var(--cyan);text-align:center}
+#qrwrap{display:none;margin-top:16px;padding:16px;border:var(--bd);background:var(--ink);text-align:center}
 #qrwrap.open{display:block}
-#qrwrap svg{background:#fff;border:var(--bd);padding:10px;width:190px;height:190px;display:block;margin:0 auto}
-#qrwrap p{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-top:11px}
+#qrwrap svg{background:var(--white);border:var(--bd);padding:10px;width:190px;height:190px;display:block;margin:0 auto}
+#qrwrap p{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-top:11px;color:var(--acc)}
 
 /* ---- inbox ---- */
-.tag{background:var(--acc2);color:var(--ink);border:2px solid var(--paper);padding:2px 8px;font-size:11px;font-weight:900}
+.tag{background:var(--acc);color:var(--ink);border:2px solid var(--paper);padding:2px 8px;font-size:11px;font-weight:900}
 #list{display:flex;flex-direction:column}
 .msg{
   border-bottom:3px solid var(--ink);padding:15px 16px;cursor:pointer;display:flex;gap:14px;
-  align-items:flex-start;background:#fff;transition:background .1s;
+  align-items:flex-start;background:var(--white);transition:background .1s;
 }
 .msg:last-child{border-bottom:none}
-.msg:hover{background:var(--acc2)}
+.msg:hover{background:var(--acc)}
 .msg .bar{width:7px;align-self:stretch;min-height:38px;background:var(--acc);flex:none}
 .msg .mid{flex:1;min-width:0}
 .msg .from{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;opacity:.6;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg .subj{font-size:16px;font-weight:700;line-height:1.35;word-break:break-word}
 .msg .meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
 .msg .time{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;opacity:.55;white-space:nowrap}
-.clip{background:var(--lime);border:2px solid var(--ink);padding:1px 6px;font-size:10px;font-weight:900;white-space:nowrap}
+.clip{background:var(--acc);border:2px solid var(--ink);padding:1px 6px;font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:52px 20px;text-align:center}
 .empty .big{font-size:44px;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;opacity:.13;line-height:1}
 .empty p{margin-top:12px;font-size:13px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.8px}
-.spin{width:13px;height:13px;border:3px solid var(--paper);border-top-color:var(--acc);animation:s .7s linear infinite;display:inline-block;vertical-align:-2px}
+.spin{width:13px;height:13px;border:3px solid var(--white);border-top-color:var(--acc);animation:s .7s linear infinite;display:inline-block;vertical-align:-2px}
 @keyframes s{to{transform:rotate(360deg)}}
 
 /* ---- modal ---- */
 .modal{position:fixed;inset:0;background:rgba(18,16,12,.72);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;z-index:20;overflow-y:auto}
 .modal.open{display:flex}
-.sheet{background:#fff;border:var(--bd);box-shadow:var(--sh);max-width:760px;width:100%;margin:auto}
+.sheet{background:var(--white);border:var(--bd);box-shadow:var(--sh);max-width:760px;width:100%;margin:auto}
 .sheet-h{background:var(--ink);color:var(--paper);padding:14px 18px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
 .sheet-h .t{font-size:17px;font-weight:900;line-height:1.3;word-break:break-word}
 .sheet-h .f{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-top:5px;word-break:break-all}
-.x{background:var(--acc);color:#fff;border:2px solid var(--paper);box-shadow:none;padding:7px 12px;font-size:15px;line-height:1;flex:none}
-.x:hover{background:var(--acc2);color:var(--ink)}
+.x{background:var(--acc);color:var(--ink);border:2px solid var(--paper);box-shadow:none;padding:7px 12px;font-size:15px;line-height:1;flex:none}
+.x:hover{background:var(--white);color:var(--ink)}
 .x:active{transform:none;box-shadow:none}
-#mbody{width:100%;min-height:210px;border:none;background:#fff;display:block}
+#mbody{width:100%;min-height:210px;border:none;background:var(--white);display:block}
 .att{border-top:3px solid var(--ink);padding:15px 18px;background:var(--paper)}
 .att .lbl{margin-bottom:10px}
 .att a{
-  display:flex;justify-content:space-between;gap:12px;align-items:center;background:#fff;border:var(--bd);
+  display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--white);border:var(--bd);
   box-shadow:var(--sh-sm);padding:11px 13px;margin-bottom:10px;text-decoration:none;color:var(--ink);
 }
-.att a:hover{background:var(--lime)}
+.att a:hover{background:var(--acc)}
 .att a:last-child{margin-bottom:0}
 .att .fn{font-size:13px;font-weight:700;word-break:break-all;font-family:"SF Mono",Consolas,monospace}
 .att .sz{font-size:11px;font-weight:900;text-transform:uppercase;opacity:.6;white-space:nowrap;flex:none}
@@ -141,7 +143,7 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc2)}
 /* ---- toast ---- */
 #toast{
   position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);
-  background:var(--ink);color:var(--paper);border:3px solid var(--paper);box-shadow:var(--sh);
+  background:var(--ink);color:var(--paper);border:3px solid var(--white);box-shadow:var(--sh);
   padding:13px 22px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1px;
   transition:transform .22s;z-index:40;pointer-events:none;max-width:90vw;text-align:center;
 }
@@ -167,7 +169,7 @@ footer{text-align:center;font-size:11px;font-weight:900;text-transform:uppercase
 <body>
 <div class="wrap">
   <header>
-    <div class="logo"><span class="sq"></span>Temp<span style="color:var(--acc2)">Mail</span></div>
+    <div class="logo"><span class="sq"></span>Temp<span style="color:var(--acc)">Mail</span></div>
     <nav class="hlinks"><a href="/docs">API Docs</a></nav>
   </header>
 
@@ -383,7 +385,7 @@ function qrSvg(text){
     if(best.m[yy][xx])d+="M"+xx+" "+yy+"h1v1h-1z";
   var q=2,total=size+q*2;
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' '+total+'" shape-rendering="crispEdges" role="img" aria-label="QR code for this email address">'+
-    '<rect width="'+total+'" height="'+total+'" fill="#fff"/><g transform="translate('+q+' '+q+')" fill="#12100c"><path d="'+d+'"/></g></svg>';
+    '<rect width="'+total+'" height="'+total+'" fill="#FFFFFF"/><g transform="translate('+q+' '+q+')" fill="#000000"><path d="'+d+'"/></g></svg>';
 }
 
 /* ================= random human-looking addresses ================= */
@@ -533,8 +535,8 @@ function showBody(html,isHtml){
     '<meta name="viewport" content="width=device-width,initial-scale=1">'+
     '<base target="_blank">'+
     '<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:14px;'+
-    'line-height:1.6;color:#12100c;padding:18px;margin:0;word-wrap:break-word}'+
-    'img{max-width:100%;height:auto}a{color:#ff3b1f}'+
+    'line-height:1.6;color:#000000;padding:18px;margin:0;word-wrap:break-word}'+
+    'img{max-width:100%;height:auto}a{color:#0a7d4b}'+
     'pre{white-space:pre-wrap;font-family:inherit;margin:0}'+
     'table{max-width:100%}</style></head><body>'+
     (isHtml?html:"<pre>"+esc(html)+"</pre>")+"</body></html>";

@@ -11,7 +11,7 @@ export const emailAddressParamSchema = z.object({
 				name: "emailAddress",
 				in: "path",
 			},
-			example: "user@example.com",
+			example: "user@kadangkesel.site",
 			description: "The email address to query for.",
 		}),
 });
@@ -55,7 +55,7 @@ export const emailSchema = z
 		}),
 		to_address: z.string().openapi({
 			description: "The recipient's email address.",
-			example: "recipient@barid.site",
+			example: "recipient@kadangkesel.site",
 		}),
 		subject: z.string().nullable().openapi({
 			description: "The subject of the email.",
@@ -96,7 +96,7 @@ export const emailSummarySchema = z
 		}),
 		to_address: z.string().openapi({
 			description: "The recipient's email address.",
-			example: "recipient@barid.site",
+			example: "recipient@kadangkesel.site",
 		}),
 		subject: z.string().nullable().openapi({
 			description: "The subject of the email.",

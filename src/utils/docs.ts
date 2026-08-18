@@ -4,8 +4,11 @@ import { Scalar } from "@scalar/hono-api-reference";
 import { DOMAINS_SET } from "@/config/domains";
 
 export function setupDocumentation(app: OpenAPIHono<{ Bindings: CloudflareBindings }>) {
-	// OpenAPI Documentation
-	app.doc("/openapi.json", {
+	// OpenAPI Documentation.
+	// The config is a function so the server URL is derived from the incoming
+	// request instead of being hardcoded — the docs then show the correct base
+	// URL on any host (custom domain, workers.dev, or localhost during dev).
+	app.doc("/openapi.json", (c) => ({
 		openapi: "3.0.0",
 		info: {
 			version: "1.0.0",
@@ -33,22 +36,22 @@ ${`\n${Array.from(DOMAINS_SET)
 	.map((domain) => `- ${domain}`)
 	.join("\n")}`}
 
-**Repository**: [github.com/vwh/temp-mail](https://github.com/vwh/temp-mail)  
-**Issues**: [Report bugs or request features](https://github.com/vwh/temp-mail/issues)
+**Repository**: [github.com/kadangkesel/ligature-temp-mail](https://github.com/kadangkesel/ligature-temp-mail)
+**Issues**: [Report bugs or request features](https://github.com/kadangkesel/ligature-temp-mail/issues)
 `,
 			contact: {
 				name: "API Support",
-				url: "https://github.com/vwh/temp-mail",
+				url: "https://github.com/kadangkesel/ligature-temp-mail",
 			},
 			license: {
 				name: "MIT",
-				url: "https://github.com/vwh/temp-mail/blob/main/LICENSE",
+				url: "https://github.com/kadangkesel/ligature-temp-mail/blob/main/LICENSE",
 			},
 		},
 		servers: [
 			{
-				url: "https://api.barid.site",
-				description: "Production server",
+				url: new URL(c.req.url).origin,
+				description: "Current server",
 			},
 		],
 		tags: [
@@ -65,9 +68,9 @@ ${`\n${Array.from(DOMAINS_SET)
 				description: "Get information about supported email domains",
 			},
 		],
-		"x-repository": "https://github.com/vwh/temp-mail",
-		"x-issues": "https://github.com/vwh/temp-mail/issues",
-	});
+		"x-repository": "https://github.com/kadangkesel/ligature-temp-mail",
+		"x-issues": "https://github.com/kadangkesel/ligature-temp-mail/issues",
+	}));
 
 	// Swagger UI - Traditional documentation
 	app.get("/swagger", swaggerUI({ url: "/openapi.json" }));
