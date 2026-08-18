@@ -124,18 +124,37 @@ function pick<T>(items: readonly T[]): T {
  * A human-looking local part, e.g. `budi.santoso`, `dewiwibowo42`, `a.pratama17`.
  * Mirrors the shapes the dashboard produces.
  */
+/** Lowercase alphanumerics only — safe in a local part, and unambiguous to read aloud. */
+const SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+const SUFFIX_LENGTH = 6;
+
+/**
+ * ~31 bits of entropy (36^6). Names alone are guessable: the pool is only
+ * 60 x 30 x 4 forms, so anyone could enumerate addresses and read other
+ * people's mail. The suffix makes an address unguessable while the readable
+ * name keeps it easy to dictate or retype.
+ */
+function randomSuffix(): string {
+	let out = "";
+	for (let i = 0; i < SUFFIX_LENGTH; i++) {
+		out += SUFFIX_ALPHABET[randomInt(SUFFIX_ALPHABET.length)];
+	}
+	return out;
+}
+
 export function randomLocalPart(): string {
 	const first = pick(FIRST_NAMES);
 	const last = pick(LAST_NAMES);
+	const suffix = randomSuffix();
 	switch (randomInt(4)) {
 		case 0:
-			return `${first}.${last}`;
+			return `${first}.${last}.${suffix}`;
 		case 1:
-			return `${first}${last}${randomInt(89) + 10}`;
+			return `${first}${last}${randomInt(89) + 10}.${suffix}`;
 		case 2:
-			return `${first}.${last}${randomInt(9) + 1}`;
+			return `${first}.${last}${randomInt(9) + 1}.${suffix}`;
 		default:
-			return `${first[0]}.${last}${randomInt(89) + 10}`;
+			return `${first[0]}.${last}${randomInt(89) + 10}.${suffix}`;
 	}
 }
 

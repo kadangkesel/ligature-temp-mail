@@ -438,12 +438,18 @@ function randInt(max){
   do{crypto.getRandomValues(buf)}while(buf[0]>=limit);
   return buf[0]%max;
 }
+var SUFFIX_ALPHABET="abcdefghijklmnopqrstuvwxyz0123456789";
+function randomSuffix(){
+  var s="";
+  for(var i=0;i<6;i++)s+=SUFFIX_ALPHABET[randInt(SUFFIX_ALPHABET.length)];
+  return s;
+}
 function randomLocal(){
-  var f=pickFrom(FIRST),l=pickFrom(LAST),n=randInt(4);
-  if(n===0)return f+"."+l;
-  if(n===1)return f+l+(randInt(89)+10);
-  if(n===2)return f+"."+l+(randInt(9)+1);
-  return f[0]+"."+l+(randInt(89)+10);
+  var f=pickFrom(FIRST),l=pickFrom(LAST),n=randInt(4),s=randomSuffix();
+  if(n===0)return f+"."+l+"."+s;
+  if(n===1)return f+l+(randInt(89)+10)+"."+s;
+  if(n===2)return f+"."+l+(randInt(9)+1)+"."+s;
+  return f[0]+"."+l+(randInt(89)+10)+"."+s;
 }
 
 /* Sentinel for the "Random domain" dropdown entry. Deliberately not a valid
