@@ -90,6 +90,30 @@ export async function getEmailById(db: D1Database, emailId: string) {
 /**
  * Delete emails older than a specific timestamp
  */
+/**
+ * R2 keys for attachments belonging to emails that are about to be purged.
+ *
+ * Must be called BEFORE deleting the emails: the FK is ON DELETE CASCADE, so
+ * once the email rows go the attachment rows go with them and their R2 keys
+ * become unrecoverable — which is how orphaned objects accumulate.
+ */
+export async function getExpiringAttachmentKeys(db: D1Database, timestamp: number) {
+	try {
+		const { results, success, error } = await db
+			.prepare(
+				`SELECT a.r2_key FROM attachments a
+				 JOIN emails e ON e.id = a.email_id
+				 WHERE e.received_at < ?`,
+			)
+			.bind(timestamp)
+			.all<{ r2_key: string }>();
+		return { keys: (results || []).map((r) => r.r2_key), success, error };
+	} catch (e: unknown) {
+		const error = e instanceof Error ? e : new Error(String(e));
+		return { keys: [], success: false, error };
+	}
+}
+
 export async function deleteOldEmails(db: D1Database, timestamp: number) {
 	try {
 		const { success, error, meta } = await db
