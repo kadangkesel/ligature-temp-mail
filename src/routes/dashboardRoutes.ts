@@ -18,9 +18,18 @@ const PAGE = (domains: string[], turnstileSiteKey: string) => `<!DOCTYPE html>
 <meta name="theme-color" content="#000000" />
 <style>
 :root{
-  /* palette: #000000 #FFFFFF #00FF7F #E6E6FA
-     green and lavender are both light, so text on them is always --ink (black) */
-  --paper:#E6E6FA;--ink:#000000;--white:#FFFFFF;--acc:#00FF7F;--lav:#E6E6FA;
+  /* Every accent is a light, highly saturated colour, so text on top of one is
+     always --ink (black) and an accent used AS text always sits on --ink.
+     Contrast against black, all AAA: green 15.6, yellow 16.5, purple 7.9, pink 7.1.
+     Never put an accent as text on --paper -- lavender is light too (ratio < 3.5).
+
+     Each accent owns a role rather than being sprinkled at random:
+       --acc  green   brand mark + the address itself
+       --yel  yellow  controls: buttons, focused inputs
+       --pink pink     inbox: message rows, counts, alerts
+       --pur  purple  opened message: modal chrome + attachments */
+  --paper:#E6E6FA;--ink:#000000;--white:#FFFFFF;
+  --acc:#00FF7F;--yel:#FFE500;--pink:#FF4FB8;--pur:#B388FF;
   --bd:3px solid var(--ink);--sh:6px 6px 0 var(--ink);--sh-sm:4px 4px 0 var(--ink);
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -41,7 +50,7 @@ header{
 .logo .sq{width:16px;height:16px;background:var(--acc);border:2px solid var(--paper);flex:none}
 .hlinks{display:flex;align-items:center;gap:8px}
 .hlinks a{
-  color:var(--ink);background:var(--acc);border:2px solid var(--paper);padding:6px 11px;
+  color:var(--ink);background:var(--yel);border:2px solid var(--paper);padding:6px 11px;
   font-size:12px;font-weight:900;text-transform:uppercase;text-decoration:none;letter-spacing:.5px;
 }
 .hlinks a:hover{background:var(--white)}
@@ -52,6 +61,10 @@ header{
   background:var(--ink);color:var(--paper);padding:9px 16px;font-size:12px;font-weight:900;
   text-transform:uppercase;letter-spacing:1.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;
 }
+/* A bar of the section's own colour, so the grouping reads without hovering.
+   box-shadow rather than an extra element: no markup change, no layout shift. */
+.panel-h{box-shadow:inset 7px 0 0 var(--acc)}
+.panel-h.inbox{box-shadow:inset 7px 0 0 var(--pink)}
 .panel-b{padding:18px}
 
 /* ---- address ---- */
@@ -69,16 +82,18 @@ button{
   background:var(--white);color:var(--ink);border:var(--bd);box-shadow:var(--sh-sm);padding:12px 16px;
   cursor:pointer;transition:transform .07s,box-shadow .07s;white-space:nowrap;
 }
-button:hover{background:var(--acc)}
+button:hover{background:var(--yel)}
 button:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+/* Primary keeps green so the main action stays distinguishable from the
+   yellow secondary buttons even before hover. */
 button.primary{background:var(--acc);color:var(--ink)}
 button.primary:hover{background:var(--ink);color:var(--acc)}
-button.danger:hover{background:var(--ink);color:var(--acc)}
+button.danger:hover{background:var(--ink);color:var(--pink)}
 select,input[type=text]{
   background:var(--white);color:var(--ink);border:var(--bd);padding:12px;cursor:pointer;max-width:100%;
 }
 input[type=text]{text-transform:lowercase;letter-spacing:0;font-weight:700;font-family:"SF Mono",Consolas,monospace;cursor:text}
-input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
+input[type=text]:focus,select:focus{outline:none;background:var(--yel)}
 
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
 .divider{height:3px;background:var(--ink);margin:18px 0;opacity:.12}
@@ -92,7 +107,7 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
 .custom select{border-left:none}
 
 .auto{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-left:auto}
-.pulse{width:9px;height:9px;background:var(--acc);border:2px solid var(--ink);animation:p 1.6s infinite;flex:none}
+.pulse{width:9px;height:9px;background:var(--pink);border:2px solid var(--ink);animation:p 1.6s infinite;flex:none}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* ---- QR ---- */
@@ -103,34 +118,37 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
 
 /* ---- inbox ---- */
 .tag{background:var(--acc);color:var(--ink);border:2px solid var(--paper);padding:2px 8px;font-size:11px;font-weight:900}
+.tag.pink{background:var(--pink)}
 #list{display:flex;flex-direction:column}
 .msg{
   border-bottom:3px solid var(--ink);padding:15px 16px;cursor:pointer;display:flex;gap:14px;
   align-items:flex-start;background:var(--white);transition:background .1s;
 }
 .msg:last-child{border-bottom:none}
-.msg:hover{background:var(--acc)}
-.msg .bar{width:7px;align-self:stretch;min-height:38px;background:var(--acc);flex:none}
+.msg:hover{background:var(--pink)}
+.msg .bar{width:7px;align-self:stretch;min-height:38px;background:var(--pink);flex:none}
 .msg .mid{flex:1;min-width:0}
 .msg .from{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;opacity:.6;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg .subj{font-size:16px;font-weight:700;line-height:1.35;word-break:break-word}
 .msg .meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
 .msg .time{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;opacity:.55;white-space:nowrap}
-.clip{background:var(--acc);border:2px solid var(--ink);padding:1px 6px;font-size:10px;font-weight:900;white-space:nowrap}
+/* Purple, not pink: this is the attachment marker (purple owns attachments),
+   and it stays visible when the row underneath turns pink on hover. */
+.clip{background:var(--pur);border:2px solid var(--ink);padding:1px 6px;font-size:10px;font-weight:900;white-space:nowrap}
 .empty{padding:52px 20px;text-align:center}
 .empty .big{font-size:44px;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;opacity:.13;line-height:1}
 .empty p{margin-top:12px;font-size:13px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.8px}
-.spin{width:13px;height:13px;border:3px solid var(--white);border-top-color:var(--acc);animation:s .7s linear infinite;display:inline-block;vertical-align:-2px}
+.spin{width:13px;height:13px;border:3px solid var(--white);border-top-color:var(--pink);animation:s .7s linear infinite;display:inline-block;vertical-align:-2px}
 @keyframes s{to{transform:rotate(360deg)}}
 
 /* ---- modal ---- */
 .modal{position:fixed;inset:0;background:rgba(18,16,12,.72);display:none;align-items:flex-start;justify-content:center;padding:24px 16px;z-index:20;overflow-y:auto}
 .modal.open{display:flex}
 .sheet{background:var(--white);border:var(--bd);box-shadow:var(--sh);max-width:760px;width:100%;margin:auto}
-.sheet-h{background:var(--ink);color:var(--paper);padding:14px 18px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.sheet-h{background:var(--ink);color:var(--paper);padding:14px 18px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;box-shadow:inset 7px 0 0 var(--pur)}
 .sheet-h .t{font-size:17px;font-weight:900;line-height:1.3;word-break:break-word}
 .sheet-h .f{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-top:5px;word-break:break-all}
-.x{background:var(--acc);color:var(--ink);border:2px solid var(--paper);box-shadow:none;padding:7px 12px;font-size:15px;line-height:1;flex:none}
+.x{background:var(--pur);color:var(--ink);border:2px solid var(--paper);box-shadow:none;padding:7px 12px;font-size:15px;line-height:1;flex:none}
 .x:hover{background:var(--white);color:var(--ink)}
 .x:active{transform:none;box-shadow:none}
 #mbody{width:100%;min-height:210px;border:none;background:var(--white);display:block}
@@ -140,7 +158,7 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
   display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--white);border:var(--bd);
   box-shadow:var(--sh-sm);padding:11px 13px;margin-bottom:10px;text-decoration:none;color:var(--ink);
 }
-.att a:hover{background:var(--acc)}
+.att a:hover{background:var(--pur)}
 .att a:last-child{margin-bottom:0}
 .att .fn{font-size:13px;font-weight:700;word-break:break-all;font-family:"SF Mono",Consolas,monospace}
 .att .sz{font-size:11px;font-weight:900;text-transform:uppercase;opacity:.6;white-space:nowrap;flex:none}
@@ -148,7 +166,7 @@ input[type=text]:focus,select:focus{outline:none;background:var(--acc)}
 /* ---- toast ---- */
 #toast{
   position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120%);
-  background:var(--ink);color:var(--paper);border:3px solid var(--white);box-shadow:var(--sh);
+  background:var(--ink);color:var(--yel);border:3px solid var(--yel);box-shadow:var(--sh);
   padding:13px 22px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1px;
   transition:transform .22s;z-index:40;pointer-events:none;max-width:90vw;text-align:center;
 }
@@ -187,7 +205,7 @@ footer{text-align:center;font-size:11px;font-weight:900;text-transform:uppercase
 .gate-card p{font-size:13px;font-weight:600;line-height:1.5;margin-bottom:18px}
 .gate-widget{display:flex;justify-content:center;min-height:65px}
 .gate-err{
-  background:var(--ink);color:var(--acc);border:2px solid var(--ink);
+  background:var(--ink);color:var(--pink);border:2px solid var(--ink);
   padding:9px 11px;font-size:12px;font-weight:800;text-transform:uppercase;margin-top:14px;
 }
 .gate-err[hidden]{display:none}
@@ -245,10 +263,10 @@ footer{text-align:center;font-size:11px;font-weight:900;text-transform:uppercase
   </section>
 
   <section class="panel">
-    <div class="panel-h">
+    <div class="panel-h inbox">
       <span>Inbox</span>
       <span style="display:flex;align-items:center;gap:10px">
-        <span class="tag" id="cnt">0</span>
+        <span class="tag pink" id="cnt">0</span>
         <span class="auto"><span class="pulse"></span>Auto 8s</span>
       </span>
     </div>
@@ -620,7 +638,9 @@ function showBody(html,isHtml){
     '<base target="_blank">'+
     '<style>body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:14px;'+
     'line-height:1.6;color:#000000;padding:18px;margin:0;word-wrap:break-word}'+
-    'img{max-width:100%;height:auto}a{color:#0a7d4b}'+
+    // A dark purple, not var(--pur): this text sits on a WHITE body, where the
+    // light accent would fail contrast (#B388FF is 1.9:1). #6D28D9 is 7.1:1.
+    'img{max-width:100%;height:auto}a{color:#6D28D9}'+
     'pre{white-space:pre-wrap;font-family:inherit;margin:0}'+
     'table{max-width:100%}</style></head><body>'+
     (isHtml?html:"<pre>"+esc(html)+"</pre>")+"</body></html>";
