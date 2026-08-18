@@ -446,6 +446,16 @@ function randomLocal(){
   return f[0]+"."+l+(randInt(89)+10);
 }
 
+/* Sentinel for the "Random domain" dropdown entry. Deliberately not a valid
+   hostname so it can never collide with a real domain from the config. */
+var RANDOM_DOMAIN="*random*";
+
+/* Turn the generate dropdown's value into a concrete domain. */
+function resolveDomain(){
+  var v=$("domain").value;
+  return v===RANDOM_DOMAIN?pickFrom(DOMAINS):v;
+}
+
 /* ================= helpers ================= */
 function $(id){return document.getElementById(id)}
 function esc(s){
@@ -487,7 +497,14 @@ function setAddr(a){
   $("addr").textContent=a;
   try{localStorage.setItem("tm_addr",a)}catch(e){}
   var dom=a.split("@")[1];
-  if(DOMAINS.indexOf(dom)>=0){$("domain").value=dom;$("cdomain").value=dom}
+  if(DOMAINS.indexOf(dom)>=0){
+    /* Only snap the generate dropdown when a concrete domain is selected.
+       Overwriting it while "Random domain" is chosen would silently downgrade
+       the choice to whichever domain happened to come up, so the next click
+       would no longer be random. */
+    if($("domain").value!==RANDOM_DOMAIN)$("domain").value=dom;
+    $("cdomain").value=dom;
+  }
   if(qrOpen)drawQr();
 }
 function drawQr(){$("qr").innerHTML=qrSvg(current)}
@@ -509,7 +526,7 @@ function copyAddr(){
 }
 
 function newRandom(){
-  setAddr(randomLocal()+"@"+$("domain").value);
+  setAddr(randomLocal()+"@"+resolveDomain());
   renderEmpty();$("cnt").textContent="0";
   refresh();
 }
@@ -665,7 +682,11 @@ function emptyInbox(){
 function boot(){
   var opts=DOMAINS.map(function(d){
     return '<option value="'+esc(d)+'">'+esc(d)+"</option>"}).join("");
-  $("domain").innerHTML=opts;
+  /* The generate dropdown leads with "Random domain" and defaults to it.
+     The custom-name dropdown gets concrete domains only: the user is typing an
+     exact address, so the domain must be predictable. */
+  $("domain").innerHTML='<option value="'+RANDOM_DOMAIN+'">Random domain</option>'+opts;
+  $("domain").value=RANDOM_DOMAIN;
   $("cdomain").innerHTML=opts;
   $("domcount").textContent=DOMAINS.length+" domains";
   $("dlist").textContent=DOMAINS.join(" \\u00b7 ");
