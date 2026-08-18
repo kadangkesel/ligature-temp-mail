@@ -74,7 +74,7 @@ ${`\n${Array.from(DOMAINS_SET)
 
 	// Scalar - Modern documentation
 	app.get(
-		"/",
+		"/docs",
 		Scalar({
 			url: "/openapi.json",
 			theme: "purple",

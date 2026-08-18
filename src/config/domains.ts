@@ -1,54 +1,13 @@
 // List of supported email domains
 
 export const DOMAINS = [
-	{
-		owner: "vwh",
-		domain: "barid.site",
-	},
-	{
-		owner: "vwh",
-		domain: "vwh.sh",
-	},
-	{
-		owner: "vwh",
-		domain: "iusearch.lol",
-	},
-	{
-		owner: "mm6x",
-		domain: "lifetalk.us",
-	},
-	{
-		owner: "z44d",
-		domain: "z44d.pro",
-	},
-	{
-		owner: "blockton",
-		domain: "wael.fun",
-	},
-	{
-		owner: "HprideH",
-		domain: "tawbah.site",
-	},
-	{
-		owner: "HprideH",
-		domain: "kuruptd.ink",
-	},
-	{
-		owner: "oxno1",
-		domain: "oxno1.space",
-	},
-	{
-		owner: "None",
-		domain: "hacktivc.com",
-	},
-	{
-		owner: "None",
-		domain: "lealaom.xyz",
-	},
-	{
-		owner: "None",
-		domain: "leala.site",
-	},
+	{ owner: "kadangkesel", domain: "kadangkesel.site" },
+	{ owner: "kadangkesel", domain: "kadangkesel.online" },
+	{ owner: "kadangkesel", domain: "estimasion.my.id" },
+	{ owner: "kadangkesel", domain: "kutanklanank.my.id" },
+	{ owner: "kadangkesel", domain: "mukaberuk.web.id" },
+	{ owner: "kadangkesel", domain: "naisely.my.id" },
+	{ owner: "kadangkesel", domain: "pantatbergetar.my.id" },
 ] satisfies {
 	owner: string;
 	domain: string;

@@ -5,6 +5,8 @@ import { setupDocumentation } from "@/utils/docs";
 import { logError } from "@/utils/logger";
 import corsMiddleware from "./middlewares/cors";
 import healthRoutes from "./routes/healthRoutes";
+import compatRoutes from "./routes/compatRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 import { ERR } from "./utils/http";
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>();
@@ -25,6 +27,10 @@ app.route("/", emailRoutes);
 app.route("/", attachmentRoutes);
 // Health Check
 app.route("/", healthRoutes);
+// Legacy TempMail API compatibility
+app.route("/", compatRoutes);
+// Dashboard homepage (must be before docs so it owns "/")
+app.route("/", dashboardRoutes);
 
 // --- OpenAPI Documentation ---
 setupDocumentation(app);
