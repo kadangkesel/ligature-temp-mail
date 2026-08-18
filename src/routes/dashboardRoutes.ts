@@ -11,6 +11,10 @@ const PAGE = (domains: string[]) => `<!DOCTYPE html>
 <meta name="color-scheme" content="light" />
 <title>TEMP MAIL — disposable inbox</title>
 <meta name="description" content="Free disposable email addresses. No signup, no tracking. Receive mail and attachments instantly." />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#000000" />
 <style>
 :root{
   /* palette: #000000 #FFFFFF #00FF7F #E6E6FA
