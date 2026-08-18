@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { DOMAINS_SET } from "@/config/domains";
+import { FIRST_NAMES, LAST_NAMES } from "@/utils/addresses";
 
 const dashboardRoutes = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -423,21 +424,18 @@ function qrSvg(text){
 }
 
 /* ================= random human-looking addresses ================= */
-var FIRST=["adam","agus","ahmad","aldi","alif","andi","anggi","anton","arif","asep","bayu","budi",
-"cahya","dani","dedi","dewi","dian","dimas","dwi","eka","endah","erik","fajar","farid","fitri",
-"gilang","hadi","hendra","ilham","indah","intan","irfan","joko","kurnia","lestari","lina","maya",
-"nanda","novi","nur","putra","putri","rahmat","reza","rina","rizky","sari","satria","siti","surya",
-"tari","tono","umar","wahyu","wulan","yoga","yudi","yuni","zaki","zahra"];
-var LAST=["abdullah","anggraini","budiman","gunawan","halim","hardiyanti","hidayat","irawan",
-"kusuma","lestari","maulana","nugroho","permata","pradana","pratama","purnama","puspita",
-"rahayu","rahman","rahmawati","ramadhan","santoso","saputra","setiawan","siregar","suryani",
-"utami","wibowo","wijaya","yulianti"];
+/* Name lists are injected from src/utils/addresses.ts so the page and the
+   /api/generate endpoint always draw from the same pool. */
+var FIRST=${JSON.stringify(FIRST_NAMES)};
+var LAST=${JSON.stringify(LAST_NAMES)};
 function pickFrom(arr){
-  var buf=new Uint32Array(1);crypto.getRandomValues(buf);
-  return arr[buf[0]%arr.length];
+  return arr[randInt(arr.length)];
 }
 function randInt(max){
-  var buf=new Uint32Array(1);crypto.getRandomValues(buf);
+  /* Rejection-sample so the modulo does not skew the distribution. */
+  var limit=Math.floor(4294967296/max)*max;
+  var buf=new Uint32Array(1);
+  do{crypto.getRandomValues(buf)}while(buf[0]>=limit);
   return buf[0]%max;
 }
 function randomLocal(){

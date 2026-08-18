@@ -4,26 +4,24 @@
 import { Hono } from "hono";
 import { DOMAINS_SET } from "@/config/domains";
 import { createDatabaseService } from "@/database";
+import { randomDomain, randomLocalPart } from "@/utils/addresses";
 
 const compatRoutes = new Hono<{ Bindings: CloudflareBindings }>();
 
 const TTL = 3600; // seconds (legacy field; real retention is the 2h/3h purge cron)
 
-function randomLocal(len = 10) {
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-	let s = "";
-	const buf = new Uint8Array(len);
-	crypto.getRandomValues(buf);
-	for (let i = 0; i < len; i++) s += chars[buf[i] % chars.length];
-	return s;
-}
-
 // GET /api/generate?domain= -> { address, token, expires, ttl }
+// `?domain=` pins the domain; omitting it picks a random supported one.
+// An unsupported `?domain=` is rejected rather than silently substituted, so a
+// typo surfaces instead of handing back an address on the wrong domain.
 compatRoutes.get("/api/generate", (c) => {
 	const domains = Array.from(DOMAINS_SET);
-	const requested = c.req.query("domain");
-	const domain = requested && DOMAINS_SET.has(requested) ? requested : domains[0];
-	const address = `${randomLocal()}@${domain}`;
+	const requested = c.req.query("domain")?.trim().toLowerCase();
+	if (requested && !DOMAINS_SET.has(requested)) {
+		return c.json({ error: `unsupported domain: ${requested}`, supported: domains }, 400);
+	}
+	const domain = requested || randomDomain(domains);
+	const address = `${randomLocalPart()}@${domain}`;
 	const now = Math.floor(Date.now() / 1000);
 	return c.json({ address, token: address, expires: now + TTL, ttl: TTL });
 });
