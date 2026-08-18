@@ -10,6 +10,24 @@ const compatRoutes = new Hono<{ Bindings: CloudflareBindings }>();
 
 const TTL = 3600; // seconds (legacy field; real retention is the 2h/3h purge cron)
 
+/**
+ * The legacy `token` is just the mailbox address, so it reaches the database as a
+ * caller-supplied string. Validating shape and domain keeps queries (and the
+ * destructive /api/release) confined to addresses this service actually hosts.
+ */
+function validateToken(
+	token: string,
+): { ok: true; address: string } | { ok: false; error: string } {
+	const address = token.trim().toLowerCase();
+	if (address.length === 0 || address.length > 254) return { ok: false, error: "invalid token" };
+	if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(address)) {
+		return { ok: false, error: "invalid token: not an email address" };
+	}
+	const domain = address.slice(address.lastIndexOf("@") + 1);
+	if (!DOMAINS_SET.has(domain)) return { ok: false, error: `unsupported domain: ${domain}` };
+	return { ok: true, address };
+}
+
 // GET /api/generate?domain= -> { address, token, expires, ttl }
 // `?domain=` pins the domain; omitting it picks a random supported one.
 // An unsupported `?domain=` is rejected rather than silently substituted, so a
@@ -35,8 +53,10 @@ compatRoutes.get("/api/domains", (c) => {
 compatRoutes.get("/api/inbox", async (c) => {
 	const token = c.req.query("token");
 	if (!token) return c.json({ error: "token required" }, 400);
+	const check = validateToken(token);
+	if (!check.ok) return c.json({ error: check.error }, 400);
 	const db = createDatabaseService(c.env.D1);
-	const { results, error } = await db.getEmailsByRecipient(token, 50, 0);
+	const { results, error } = await db.getEmailsByRecipient(check.address, 50, 0);
 	if (error) return c.json({ error: error.message }, 500);
 	const messages = (results || []).map((m: any) => ({
 		id: m.id,
@@ -85,8 +105,12 @@ compatRoutes.post("/api/renew", (c) => {
 compatRoutes.post("/api/release", async (c) => {
 	const token = c.req.query("token");
 	if (!token) return c.json({ error: "token required" }, 400);
+	// Destructive, so validate before it reaches the delete: an arbitrary string
+	// previously went straight into the query.
+	const check = validateToken(token);
+	if (!check.ok) return c.json({ error: check.error }, 400);
 	const db = createDatabaseService(c.env.D1);
-	const { meta, error } = await db.deleteEmailsByRecipient(token);
+	const { meta, error } = await db.deleteEmailsByRecipient(check.address);
 	if (error) return c.json({ error: error.message }, 500);
 	return c.json({ released: true, deleted_count: meta?.changes ?? 0 });
 });

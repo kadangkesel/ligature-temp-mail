@@ -16,10 +16,19 @@ export const emailAddressParamSchema = z.object({
 		}),
 });
 
+/**
+ * cuid2 as actually produced by `createId()`: 24 lowercase alphanumerics.
+ *
+ * Zod's `.cuid2()` is deliberately permissive about length (it accepts a
+ * 200-character string), so an explicit bound is used to keep obviously
+ * malformed IDs out of the database layer.
+ */
+export const ID_PATTERN = /^[a-z0-9]{24}$/;
+
 export const emailIdParamSchema = z.object({
 	emailId: z
 		.string()
-		.cuid2()
+		.regex(ID_PATTERN, "must be a 24-character cuid2")
 		.openapi({
 			param: {
 				name: "emailId",
@@ -31,12 +40,15 @@ export const emailIdParamSchema = z.object({
 });
 
 // Query schemas
+// `.int()` matters: D1 rejects a non-integer LIMIT/OFFSET, which surfaced as a
+// 500 leaking the raw SQL error for input like `?limit=1.5`. Rejecting it here
+// turns that into a clean 400.
 export const emailQuerySchema = z.object({
-	limit: z.coerce.number().min(1).max(100).optional().default(10).openapi({
+	limit: z.coerce.number().int().min(1).max(100).optional().default(10).openapi({
 		example: 20,
 		description: "The maximum number of emails to return.",
 	}),
-	offset: z.coerce.number().min(0).optional().default(0).openapi({
+	offset: z.coerce.number().int().min(0).max(1_000_000).optional().default(0).openapi({
 		example: 0,
 		description: "The number of emails to skip before starting to return results.",
 	}),

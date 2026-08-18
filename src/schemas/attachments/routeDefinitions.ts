@@ -1,6 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import {
 	domainErrorResponseSchema,
+	ID_PATTERN,
 	notFoundErrorResponseSchema,
 	validationErrorResponseSchema,
 } from "../emails";
@@ -120,9 +121,9 @@ export const getAttachmentRoute = createRoute({
 	tags: ["Attachments"],
 	request: {
 		params: z.object({
-			attachmentId: z.string().openapi({
+			attachmentId: z.string().regex(ID_PATTERN, "must be a 24-character cuid2").openapi({
 				description: "The unique identifier of the attachment.",
-				example: "att_usm2sw0qfv9a5ku9z4xmh8og",
+				example: "usm2sw0qfv9a5ku9z4xmh8og",
 			}),
 		}),
 	},
@@ -166,9 +167,9 @@ export const deleteAttachmentRoute = createRoute({
 	tags: ["Attachments"],
 	request: {
 		params: z.object({
-			attachmentId: z.string().openapi({
+			attachmentId: z.string().regex(ID_PATTERN, "must be a 24-character cuid2").openapi({
 				description: "The unique identifier of the attachment.",
-				example: "att_usm2sw0qfv9a5ku9z4xmh8og",
+				example: "usm2sw0qfv9a5ku9z4xmh8og",
 			}),
 		}),
 	},

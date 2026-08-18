@@ -1,11 +1,12 @@
 import { z } from "@hono/zod-openapi";
+import { ID_PATTERN } from "../emails";
 
 // Attachment schemas
 export const attachmentSchema = z
 	.object({
 		id: z.string().openapi({
 			description: "The unique identifier for the attachment.",
-			example: "att_usm2sw0qfv9a5ku9z4xmh8og",
+			example: "usm2sw0qfv9a5ku9z4xmh8og",
 		}),
 		email_id: z.string().openapi({
 			description: "The ID of the email this attachment belongs to.",
@@ -38,7 +39,7 @@ export const attachmentSummarySchema = z
 	.object({
 		id: z.string().openapi({
 			description: "The unique identifier for the attachment.",
-			example: "att_usm2sw0qfv9a5ku9z4xmh8og",
+			example: "usm2sw0qfv9a5ku9z4xmh8og",
 		}),
 		filename: z.string().openapi({
 			description: "The original filename of the attachment.",
@@ -63,13 +64,13 @@ export const attachmentSummarySchema = z
 export const attachmentIdParamSchema = z.object({
 	attachmentId: z
 		.string()
-		.cuid2()
+		.regex(ID_PATTERN, "must be a 24-character cuid2")
 		.openapi({
 			param: {
 				name: "attachmentId",
 				in: "path",
 			},
-			example: "att_usm2sw0qfv9a5ku9z4xmh8og",
+			example: "usm2sw0qfv9a5ku9z4xmh8og",
 			description: "The unique identifier for the attachment.",
 		}),
 });

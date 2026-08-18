@@ -5,6 +5,7 @@ import { setupDocumentation } from "@/utils/docs";
 import { logError } from "@/utils/logger";
 import apiKeyMiddleware from "./middlewares/apiKey";
 import corsMiddleware from "./middlewares/cors";
+import securityHeadersMiddleware from "./middlewares/securityHeaders";
 import authRoutes from "./routes/authRoutes";
 import compatRoutes from "./routes/compatRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
@@ -16,11 +17,16 @@ const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>();
 
 // --- Middlewares ---
 app.use(corsMiddleware);
+app.use(securityHeadersMiddleware);
 
 // --- Error handling ---
 app.onError((err, c) => {
+	// Log the real error server-side, but return a generic message: raw errors
+	// leaked internals (e.g. a D1 failure echoed the SQL statement back to the
+	// caller). Validation errors raised deliberately by handlers keep their own
+	// explicit responses, so this only covers genuine unhandled faults.
 	logError(`Unhandled error: ${err.message}`, err);
-	return c.json(ERR(err.name, err.message), 500);
+	return c.json(ERR("An internal error occurred.", "InternalServerError"), 500);
 });
 
 /**
