@@ -154,6 +154,55 @@ To check your Cloudflare Workers, D1 databases, and domain information directly 
     bun run cf-info
     ```
 
+### Bot Protection (API Key + Turnstile)
+
+The API and the web dashboard are protected separately, because a browser cannot safely hold a
+shared secret.
+
+**API routes** (`/emails/*`, `/inbox/*`, `/attachments/*`, `/api/*`) require an API key:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" https://your-worker/api/domains
+# or
+curl -H "X-API-Key: YOUR_API_KEY" https://your-worker/api/domains
+```
+
+Responses: `401` if no key was sent, `403` if the key is wrong.
+
+**Public routes** (no key needed): `/` (dashboard), `/health`, `/domains`, `/favicon.ico`,
+`/docs`, `/swagger`, `/openapi.json`, and `POST /auth/verify`.
+
+**Web dashboard** uses a [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+challenge instead of the key. On success the Worker issues a 12-hour HttpOnly, SameSite=Lax cookie
+signed with HMAC-SHA256, and the API middleware accepts that cookie. This keeps the API key out of
+page source. Sessions are stateless (there is no KV binding), so a cookie cannot be revoked before
+it expires — hence the short TTL.
+
+Configure it:
+
+1. Create a Turnstile widget in the Cloudflare dashboard and put the **sitekey** in
+   `wrangler.jsonc` under `vars.TURNSTILE_SITE_KEY`. The sitekey is public — it is embedded in the
+   page HTML. Leave it empty to disable the gate (handy for local development).
+
+2. Set the three secrets. Never commit these:
+
+    ```bash
+    bun wrangler secret put API_KEY               # shared key for API clients
+    bun wrangler secret put SESSION_SECRET        # HMAC key for session cookies
+    bun wrangler secret put TURNSTILE_SECRET_KEY  # pairs with the sitekey
+    ```
+
+3. For local development put the same values in `.dev.vars` (gitignored):
+
+    ```
+    API_KEY="..."
+    SESSION_SECRET="..."
+    TURNSTILE_SECRET_KEY="..."
+    ```
+
+If `API_KEY` is unset the API **fails closed** (`503`) rather than serving unauthenticated
+traffic, so a partial deploy cannot silently reopen the service.
+
 ### Telegram Logging (Optional)
 
 If you wish to enable Telegram logging for your worker, follow these steps:

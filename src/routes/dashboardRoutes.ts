@@ -3,7 +3,7 @@ import { DOMAINS_SET } from "@/config/domains";
 
 const dashboardRoutes = new Hono<{ Bindings: CloudflareBindings }>();
 
-const PAGE = (domains: string[]) => `<!DOCTYPE html>
+const PAGE = (domains: string[], turnstileSiteKey: string) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -168,9 +168,39 @@ footer{text-align:center;font-size:11px;font-weight:900;text-transform:uppercase
   .msg .meta{flex-direction:row;align-items:center}
   .empty .big{font-size:30px}
 }
+
+/* ---- bot-protection gate ---- */
+#gate{
+  position:fixed;inset:0;z-index:100;background:var(--paper);
+  background-image:radial-gradient(var(--ink) 1.2px,transparent 1.2px);background-size:22px 22px;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#gate[hidden]{display:none}
+.gate-card{
+  background:var(--white);border:var(--bd);box-shadow:var(--sh);
+  padding:26px 22px;max-width:420px;width:100%;text-align:center;
+}
+.gate-card h2{
+  font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:-.5px;margin-bottom:8px;
+}
+.gate-card p{font-size:13px;font-weight:600;line-height:1.5;margin-bottom:18px}
+.gate-widget{display:flex;justify-content:center;min-height:65px}
+.gate-err{
+  background:var(--ink);color:var(--acc);border:2px solid var(--ink);
+  padding:9px 11px;font-size:12px;font-weight:800;text-transform:uppercase;margin-top:14px;
+}
+.gate-err[hidden]{display:none}
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="gate-card">
+    <h2>Quick check</h2>
+    <p>Confirming you&rsquo;re not a bot. This keeps the inboxes usable for everyone.</p>
+    <div class="gate-widget" id="gate-widget"></div>
+    <div class="gate-err" id="gate-err" hidden></div>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <div class="logo"><span class="sq"></span>Temp<span style="color:var(--acc)">Mail</span></div>
@@ -505,13 +535,37 @@ function renderError(){
     '<p>Could not load the inbox &mdash; retrying</p></div>';
 }
 
+/* All API calls go through here so the session cookie is always sent and an
+   expired session re-shows the gate instead of silently rendering an empty
+   inbox. Rejects with "auth" on 401/403 so callers can distinguish it. */
+function api(path,opts){
+  var o=opts||{};
+  o.credentials="same-origin";
+  return fetch(path,o).then(function(r){
+    if(r.status===401||r.status===403){
+      sessionExpired();
+      throw new Error("auth");
+    }
+    return r;
+  });
+}
+
+function sessionExpired(){
+  var g=$("gate");
+  if(!g||!booted)return;
+  booted=false;
+  g.hidden=false;
+  gateError("Session expired. Reloading\\u2026");
+  setTimeout(function(){location.reload()},1500);
+}
+
 var refreshing=false;
 function refresh(){
   if(!current||refreshing)return;
   refreshing=true;
   var cnt=$("cnt");
   cnt.innerHTML='<span class="spin"></span>';
-  fetch("/emails/"+encodeURIComponent(current)+"?limit=50")
+  api("/emails/"+encodeURIComponent(current)+"?limit=50")
     .then(function(r){return r.json()})
     .then(function(j){
       if(!j||!j.success){renderError();cnt.textContent="0";return}
@@ -528,7 +582,12 @@ function refresh(){
           '<div class="meta"><span class="time">'+esc(fmtTime(m.received_at))+'</span>'+clip+'</div></div>';
       }).join("");
     })
-    .catch(function(){renderError();$("cnt").textContent="0"})
+    .catch(function(e){
+      // On an auth failure the gate is already re-showing; don't overwrite it
+      // with a misleading "could not load" message.
+      if(e&&e.message==="auth")return;
+      renderError();$("cnt").textContent="0";
+    })
     .then(function(){refreshing=false});
 }
 
@@ -548,7 +607,7 @@ function showBody(html,isHtml){
 }
 
 function openMsg(id){
-  fetch("/inbox/"+encodeURIComponent(id))
+  api("/inbox/"+encodeURIComponent(id))
     .then(function(r){return r.json()})
     .then(function(j){
       if(!j||!j.success||!j.result){toast("Could not open message");return}
@@ -563,11 +622,11 @@ function openMsg(id){
       att.style.display="none";att.innerHTML="";
       if(m.has_attachments)loadAttachments(id);
     })
-    .catch(function(){toast("Could not open message")});
+    .catch(function(e){if(e&&e.message!=="auth")toast("Could not open message")});
 }
 
 function loadAttachments(id){
-  fetch("/inbox/"+encodeURIComponent(id)+"/attachments")
+  api("/inbox/"+encodeURIComponent(id)+"/attachments")
     .then(function(r){return r.json()})
     .then(function(j){
       if(!j||!j.success)return;
@@ -595,17 +654,17 @@ function closeModal(){
 function emptyInbox(){
   if(!current)return;
   if(!confirm("Delete all messages in "+current+"?"))return;
-  fetch("/emails/"+encodeURIComponent(current),{method:"DELETE"})
+  api("/emails/"+encodeURIComponent(current),{method:"DELETE"})
     .then(function(r){return r.json()})
     .then(function(j){
       toast(j&&j.success?"Inbox emptied":"Nothing to delete");
       refresh();
     })
-    .catch(function(){toast("Delete failed")});
+    .catch(function(e){if(e&&e.message!=="auth")toast("Delete failed")});
 }
 
 /* ================= init ================= */
-(function(){
+function boot(){
   var opts=DOMAINS.map(function(d){
     return '<option value="'+esc(d)+'">'+esc(d)+"</option>"}).join("");
   $("domain").innerHTML=opts;
@@ -647,13 +706,81 @@ function emptyInbox(){
   document.addEventListener("visibilitychange",function(){
     if(!document.hidden)refresh();
   });
-})();
+}
+
+/* ================= bot-protection gate =================
+   The page cannot hold the API key (page source is public), so it earns a
+   short-lived HttpOnly session cookie by solving Turnstile, and the API accepts
+   that cookie. boot() only runs once a cookie is held. */
+var TURNSTILE_SITE_KEY=${JSON.stringify(turnstileSiteKey)};
+var booted=false;
+
+function startApp(){
+  if(booted)return;
+  booted=true;
+  var g=$("gate");
+  if(g)g.hidden=true;
+  boot();
+}
+
+function gateError(msg){
+  var e=$("gate-err");
+  if(!e)return;
+  e.textContent=msg;
+  e.hidden=false;
+}
+
+/* Exchange a Turnstile token for the session cookie. */
+function submitToken(token){
+  fetch("/auth/verify",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    credentials:"same-origin",
+    body:JSON.stringify({token:token})
+  })
+    .then(function(r){return r.json().then(function(j){return {status:r.status,body:j}})})
+    .then(function(res){
+      if(res.status===200&&res.body&&res.body.success){startApp();return}
+      if(res.status===503){gateError("Verification is misconfigured on the server.");return}
+      gateError("Verification failed. Reloading to try again\\u2026");
+      setTimeout(function(){location.reload()},2500);
+    })
+    .catch(function(){gateError("Network error. Check your connection and reload.")});
+}
+
+/* Called by the Turnstile script once it loads. */
+window.onTurnstileLoad=function(){
+  if(!TURNSTILE_SITE_KEY||!window.turnstile){startApp();return}
+  try{
+    window.turnstile.render("#gate-widget",{
+      sitekey:TURNSTILE_SITE_KEY,
+      callback:submitToken,
+      "error-callback":function(){gateError("Challenge could not load. Please reload.")},
+      "expired-callback":function(){gateError("Challenge expired. Reloading\\u2026");
+        setTimeout(function(){location.reload()},1500)}
+    });
+  }catch(e){
+    gateError("Challenge could not start. Please reload.");
+  }
+};
+
+/* No sitekey configured (local dev): skip straight to the app. If a sitekey IS
+   set, the widget's callback drives startApp() instead. */
+if(!TURNSTILE_SITE_KEY)startApp();
 </script>
+${
+	turnstileSiteKey
+		? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>'
+		: "<!-- Turnstile disabled: no TURNSTILE_SITE_KEY configured -->"
+}
 </body>
 </html>`;
 
 dashboardRoutes.get("/", (c) => {
-	return c.html(PAGE(Array.from(DOMAINS_SET)));
+	// The sitekey is public by design (it ships in the HTML); only the secret is
+	// confidential. When it is unset the page renders no widget and the gate
+	// self-clears, so local dev works without provisioning Turnstile keys.
+	return c.html(PAGE(Array.from(DOMAINS_SET), c.env.TURNSTILE_SITE_KEY || ""));
 });
 
 export default dashboardRoutes;

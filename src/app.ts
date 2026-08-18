@@ -3,7 +3,9 @@ import attachmentRoutes from "@/routes/attachmentRoutes";
 import emailRoutes from "@/routes/emailRoutes";
 import { setupDocumentation } from "@/utils/docs";
 import { logError } from "@/utils/logger";
+import apiKeyMiddleware from "./middlewares/apiKey";
 import corsMiddleware from "./middlewares/cors";
+import authRoutes from "./routes/authRoutes";
 import compatRoutes from "./routes/compatRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
 import faviconRoutes from "./routes/faviconRoutes";
@@ -21,7 +23,25 @@ app.onError((err, c) => {
 	return c.json(ERR(err.name, err.message), 500);
 });
 
+/**
+ * --- Authentication ---
+ * Guard the data-bearing API surface against bot abuse. Registered before the
+ * route handlers below so it runs first.
+ *
+ * Deliberately left open: "/" (dashboard), the favicons, "/health", "/domains",
+ * and the docs endpoints. Note that "/domains" lives inside emailRoutes but sits
+ * outside every guarded prefix, so it stays public without a carve-out.
+ *
+ * Accepted credentials are an API key or the dashboard's Turnstile session
+ * cookie — see middlewares/apiKey.ts for why both exist.
+ */
+for (const prefix of ["/emails/*", "/inbox/*", "/attachments/*", "/api/*"]) {
+	app.use(prefix, apiKeyMiddleware);
+}
+
 // --- Routes ---
+// Turnstile challenge exchange (must stay public: it is how a browser authenticates)
+app.route("/", authRoutes);
 // Email Routes
 app.route("/", emailRoutes);
 // Attachment Routes

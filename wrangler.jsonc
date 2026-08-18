@@ -29,7 +29,14 @@
 	},
 	"vars": {
 		"TELEGRAM_LOG_ENABLE": false,
-		"HOURS_TO_DELETE_D1": 3
+		"HOURS_TO_DELETE_D1": 3,
+		/**
+		 * Turnstile sitekey. Public by design — it is embedded in the page HTML.
+		 * The matching secret is a Worker secret, never committed:
+		 *   bunx wrangler secret put TURNSTILE_SECRET_KEY
+		 * Leave empty to disable the bot gate (useful for local dev).
+		 */
+		"TURNSTILE_SITE_KEY": "0x4AAAAAAETgQrc9q6Fln_51"
 	},
 	// "assets": { "directory": "./public/" },
 	/**
