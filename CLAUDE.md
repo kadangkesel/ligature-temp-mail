@@ -55,8 +55,9 @@ src/
 │   ├── emailHandler.ts        # Email processing handler
 │   └── scheduledHandler.ts   # Scheduled task handlers
 ├── middlewares/               # Route middlewares
+│   ├── apiKey.ts              # API key / session cookie authentication
 │   ├── cors.ts                # CORS middleware
-│   └── validateDomain.ts      # Domain validation middleware
+│   └── securityHeaders.ts     # CSP and hardening response headers
 ├── routes/                    # API route definitions
 │   ├── emailRoutes.ts         # Email-related endpoints
 │   ├── attachmentRoutes.ts    # Attachment-related endpoints
@@ -65,13 +66,17 @@ src/
 │   ├── emails/                # Email-related schemas
 │   └── attachments/           # Attachment-related schemas
 └── utils/                     # Utility functions
+    ├── addresses.ts           # Random address generation (shared by API and dashboard)
     ├── docs.ts                # OpenAPI documentation setup
+    ├── download.ts            # Safe Content-Type / Content-Disposition headers
     ├── helpers.ts             # Helper functions
     ├── http.ts                # HTTP response utilities
     ├── logger.ts              # Logging utilities (including Telegram)
-    ├── mail.ts                # Email processing utilities
+    ├── mail.ts                # Email processing + HTML sanitizer (allowlist)
     ├── performance.ts         # Performance monitoring
-    └── telegram.ts            # Telegram logging integration
+    ├── session.ts             # HMAC session token issue/verify
+    ├── telegram.ts            # Telegram logging integration
+    └── validation.ts          # Domain validation helpers
 
 sql/                           # Database schema files
 ├── schema.sql                 # Database table definitions
@@ -120,7 +125,10 @@ cloudflare-info/               # Cloudflare information utility
 ### Attachment Support
 - **File Size**: Up to 50MB per attachment
 - **File Count**: Up to 10 attachments per email
-- **Supported Types**: Images, documents, archives, databases, and more
+- **Supported Types**: Images, documents, archives, databases, and more.
+  SVG is deliberately excluded — it is an XML document that can carry `<script>`.
+  Attachments are always served with `Content-Disposition: attachment` and
+  `nosniff`, and executable content types are coerced to `application/octet-stream`.
 - **Storage**: Cloudflare R2 for reliable object storage
 
 ### API Endpoints
