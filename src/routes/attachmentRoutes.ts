@@ -15,6 +15,7 @@ import {
 
 // Utility imports
 import { ERR, OK } from "@/utils/http";
+import { contentDisposition, safeContentType } from "@/utils/download";
 import { validateEmailDomain } from "@/utils/validation";
 
 const attachmentRoutes = new OpenAPIHono<{ Bindings: CloudflareBindings }>();
@@ -79,10 +80,15 @@ attachmentRoutes.openapi(getAttachmentRoute, async (c) => {
 		return c.json(ERR(r2Error?.message || "Failed to retrieve attachment", "NotFound"), 404);
 	}
 
-	// Set appropriate headers
-	c.header("Content-Type", attachment.content_type);
-	c.header("Content-Disposition", `attachment; filename="${attachment.filename}"`);
+	// The filename and content type both originate from the sender, so neither is
+	// trusted here. Serving `text/html` or `image/svg+xml` inline would let a
+	// crafted attachment run script on this origin, and a filename containing a
+	// quote or CRLF could corrupt/split the response headers.
+	c.header("Content-Type", safeContentType(attachment.content_type));
+	c.header("Content-Disposition", contentDisposition(attachment.filename));
 	c.header("Content-Length", attachment.size.toString());
+	// Stops the browser from ignoring the declared type and sniffing HTML/script.
+	c.header("X-Content-Type-Options", "nosniff");
 
 	return c.body(data.body);
 });

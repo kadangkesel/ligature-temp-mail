@@ -12,7 +12,9 @@ export const ATTACHMENT_LIMITS = {
 		"image/png",
 		"image/gif",
 		"image/webp",
-		"image/svg+xml",
+		// NOTE: image/svg+xml is deliberately NOT allowed. SVG is an XML document
+		// that can carry <script>, so accepting it would let an emailed attachment
+		// execute in this origin when opened.
 		// Documents
 		"application/pdf",
 		"text/plain",
