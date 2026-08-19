@@ -8,6 +8,8 @@ export const DOMAINS = [
 	{ owner: "kadangkesel", domain: "mukaberuk.web.id" },
 	{ owner: "kadangkesel", domain: "naisely.my.id" },
 	{ owner: "kadangkesel", domain: "pantatbergetar.my.id" },
+	{ owner: "kadangkesel", domain: "nestapvo.site" },
+	{ owner: "kadangkesel", domain: "hemdev.cloud" },
 ] satisfies {
 	owner: string;
 	domain: string;
