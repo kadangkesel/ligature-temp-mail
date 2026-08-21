@@ -14,6 +14,7 @@ export const DOMAINS = [
 	{ owner: "kadangkesel", domain: "orenage.site" },
 	{ owner: "kadangkesel", domain: "widuri.site" },
 	{ owner: "kadangkesel", domain: "kusaragi.site" },
+	{ owner: "kadangkesel", domain: "murtualis.site" },
 ] satisfies {
 	owner: string;
 	domain: string;
