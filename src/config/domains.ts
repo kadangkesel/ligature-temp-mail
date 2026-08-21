@@ -15,6 +15,12 @@ export const DOMAINS = [
 	{ owner: "kadangkesel", domain: "widuri.site" },
 	{ owner: "kadangkesel", domain: "kusaragi.site" },
 	{ owner: "kadangkesel", domain: "murtualis.site" },
+	// A subdomain, not an apex. Nothing in this codebase parses domain labels --
+	// every consumer treats the domain as an opaque string matched via
+	// DOMAINS_SET.has() -- so no code change is needed beyond this line. It only
+	// receives mail once Cloudflare Email Routing is onboarded for this exact
+	// hostname; the parent zone's MX record does NOT cover its subdomains.
+	{ owner: "kadangkesel", domain: "sub.kusaragi.site" },
 ] satisfies {
 	owner: string;
 	domain: string;
