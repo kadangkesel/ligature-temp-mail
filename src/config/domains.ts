@@ -15,6 +15,8 @@ export const DOMAINS = [
 	{ owner: "kadangkesel", domain: "widuri.site" },
 	{ owner: "kadangkesel", domain: "kusaragi.site" },
 	{ owner: "kadangkesel", domain: "murtualis.site" },
+	{ owner: "kadangkesel", domain: "erazely.site" },
+	{ owner: "kadangkesel", domain: "nimbuslogy.site" },
 	// A subdomain, not an apex. Nothing in this codebase parses domain labels --
 	// every consumer treats the domain as an opaque string matched via
 	// DOMAINS_SET.has() -- so no code change is needed beyond this line. It only
